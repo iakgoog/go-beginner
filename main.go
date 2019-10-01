@@ -13,5 +13,5 @@ import (
 
 func main() {
 	// basic.TryGoRoutine()
-	webserver.TryMe("Sutthinart")
+	webserver.RunWebServer()
 }

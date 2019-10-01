@@ -436,3 +436,87 @@ func TryGoRoutine() {
 	// normalLoop()
 	goRoutineLoop()
 }
+
+/*================================ Channel ================================*/
+
+var (
+	arr1 = []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+	arr2 = []int{11, 12, 13, 14, 15, 16, 17, 18, 19, 20}
+)
+
+// TryChannel function
+func TryChannel() {
+	withGo()
+}
+
+func withGo() {
+	defer timer()()
+	// create channel that send int
+	chRes1 := make(chan int)
+	chRes2 := make(chan int)
+	go func() {
+		chRes1 <- sum(arr1)
+	}()
+	go func() {
+		chRes2 <- sum(arr2)
+	}()
+	fmt.Println("sum arr1:", <-chRes1)
+	fmt.Println("sum arr2:", <-chRes2)
+}
+
+func withoutGo() {
+	// *1 + *2 cane be rewrite as
+	defer timer()()
+	// f := timer() // *1
+	fmt.Println("sum arr1", sum(arr1))
+	fmt.Println("sum arr2", sum(arr2))
+	// f() // *2
+}
+
+func timer() func() {
+	t := time.Now()
+	return func() {
+		diff := time.Now().Sub(t)
+		fmt.Println(diff)
+	}
+}
+
+func sum(a []int) int {
+	s := 0
+	for _, x := range a {
+		s += x
+		time.Sleep(time.Millisecond * 200)
+	}
+	return s
+}
+
+/*================================ Select ================================*/
+
+// TrySelect function
+func TrySelect() {
+	res, err := doWorkWithLimitTime(5 * time.Second)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(res)
+}
+
+func doVeryLongWork() int {
+	time.Sleep(4 * time.Second)
+	return 1
+}
+
+func doWorkWithLimitTime(d time.Duration) (int, error) {
+	ch := make(chan int)
+	go func() {
+		ch <- doVeryLongWork()
+	}()
+
+	select {
+	case r := <-ch: // do work until done
+		return r, nil
+	case <-time.After(d): // stop work at given time limit
+		return 0, fmt.Errorf("timeout")
+	}
+}
