@@ -10,9 +10,11 @@ go run main.go
 
 **pk** = magic
 
-**pkgm**
+**pkgm**  
 
-**fp** = fmt.Println("")
+**fp** = fmt.Println("")  
+
+**lp** = log.Println("")  
 
 log.Println("Hello, from log")  
 2019/09/17 08:30:34 Hello, from log

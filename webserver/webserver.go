@@ -8,7 +8,7 @@ import (
 
 // RunWebServer function
 func RunWebServer() {
-	runMiddleWare()
+	runConfigMiddleware()
 }
 
 func hardWay() {
@@ -178,3 +178,137 @@ func m3(h http.Handler) http.Handler {
 }
 
 /*================================ CONFIG MIDDLEWARE ================================*/
+
+func allowRoleAdmin(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// ***** coding the "Happy Path" way (easier to READ)
+		// we get rid of what we don't want
+		reqRole := r.Header.Get("Role")
+		// This is what we DON'T want
+		if reqRole != "admin" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		// This is what we WANT
+		h.ServeHTTP(w, r)
+	})
+}
+
+func allowRoleStaff(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		reqRole := r.Header.Get("Role")
+		if reqRole != "staff" {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+			return
+		}
+		h.ServeHTTP(w, r)
+	})
+}
+
+// allowRoleAdmin and allowRoleStaff are duplicated code,
+// Let's DRY it.
+
+func allowRole(role string) middleware {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqRole := r.Header.Get("Role")
+			if reqRole != role {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+// has performance issues with O(n)
+func allowRoles(roles ...string) middleware {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqRole := r.Header.Get("Role")
+			// brute force way to check
+			for _, role := range roles {
+				if reqRole == role {
+					h.ServeHTTP(w, r)
+					return
+				}
+			}
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		})
+	}
+}
+
+// improve performance with O(1)
+func allowRoles2(roles ...string) middleware {
+	allow := make(map[string]bool)
+	for _, role := range roles {
+		allow[role] = true
+	}
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqRole := r.Header.Get("Role")
+			if !allow[reqRole] {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+// ***** further improve memory management
+func allowRoles3(roles ...string) middleware {
+	// ***** empty struct takes 0 byte, boolean takes memory
+	allow := make(map[string]struct{})
+	for _, role := range roles {
+		// create empty struct
+		allow[role] = struct{}{}
+	}
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			reqRole := r.Header.Get("Role")
+			if _, ok := allow[reqRole]; !ok {
+				http.Error(w, "Forbidden", http.StatusForbidden)
+				return
+			}
+			h.ServeHTTP(w, r)
+		})
+	}
+}
+
+func runConfigMiddleware() {
+	// create default Mux
+	http.HandleFunc("/", index3Handler)
+	// http.Handle("/admin", allowRoleAdmin(http.HandlerFunc(adminHandler)))
+	// http.Handle("/staff", allowRoleStaff(http.HandlerFunc(staffHandler)))
+
+	// Let's DRY it
+	// allowRoleAdmin := allowRole("admin")
+	// allowRoleStaff := allowRole("staff")
+	// http.Handle("/admin", allowRoleAdmin(http.HandlerFunc(adminHandler)))
+	// http.Handle("/staff", allowRoleStaff(http.HandlerFunc(staffHandler)))
+
+	// Let's use allowRoles function
+	http.Handle("/admin", allowRoles3("admin")(http.HandlerFunc(adminHandler)))
+	http.Handle("/staff", allowRoles3("staff")(http.HandlerFunc(staffHandler)))
+	http.Handle("/admin-staff", allowRoles3("admin", "staff")(http.HandlerFunc(adminStaffHandler)))
+
+	err := http.ListenAndServe(":8080", nil)
+	log.Println(err)
+}
+
+func adminHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello. Admin."))
+}
+
+func index3Handler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello"))
+}
+
+func staffHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello. Staff."))
+}
+
+func adminStaffHandler(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("Hello. Admin and Staff."))
+}
