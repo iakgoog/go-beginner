@@ -12,6 +12,12 @@ func RunWebServer() {
 }
 
 func hardWay() {
+	// SIGNATURE: func ListenAndServe(addr string, handler Handler) error {}
+	/*
+		type Handler interface {
+			ServeHTTP(ResponseWriter, *Request)
+		}
+	*/
 	err := http.ListenAndServe(":8080", &indexHandler{})
 	log.Println(err)
 }
@@ -25,6 +31,7 @@ func (*indexHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 /*================================ MULTIPLEXER (MUX) ================================*/
 
 func easyWay() {
+	// type HandlerFunc func(ResponseWriter, *Request)
 	// h := http.HandlerFunc(anotherIndexHandler)
 	h := http.HandlerFunc(mux)
 	err := http.ListenAndServe(":8080", h)
@@ -87,11 +94,52 @@ func easyMux() {
 }
 
 /*================================ MIDDLEWARE ================================*/
+// THERE IS A LIB FOR MIDDLEWARE CHAINING AT "github.com/achoshift/middleware"
 
 func runMiddleWare() {
-	h := logger(http.HandlerFunc(index2Handler))
+	// demonstrate single middleware
+	// h := logger(http.HandlerFunc(index2Handler))
+
+	// demonstrate multiple middleware
+	// h := m1(m2(m3(http.HandlerFunc(index2Handler))))
+
+	// demonstrate chaining middleware
+	// m := chain([]middleware{m1, m2, m3})
+	// the difference between chain func and anotherChain func is
+	// anotherChain func accept arguments like below
+	// m := anotherChain(m1, m2, m3)
+	// h := m(http.HandlerFunc(index2Handler))
+	// or you it can be writen this way
+	h := anotherChain(
+		m1,
+		m2,
+		m3,
+	)(http.HandlerFunc(index2Handler))
+
 	err := http.ListenAndServe(":8080", h)
 	log.Println(err)
+}
+
+type middleware func(http.Handler) http.Handler
+
+// middleware chaining concept
+func chain(hs []middleware) middleware {
+	return func(h http.Handler) http.Handler {
+		for i := len(hs); i > 0; i-- {
+			h = hs[i-1](h)
+		}
+		return h
+	}
+}
+
+// look for the difference from the above function
+func anotherChain(hs ...middleware) middleware {
+	return func(h http.Handler) http.Handler {
+		for i := len(hs); i > 0; i-- {
+			h = hs[i-1](h)
+		}
+		return h
+	}
 }
 
 func logger(h http.Handler) http.Handler {
@@ -107,3 +155,26 @@ func logger(h http.Handler) http.Handler {
 func index2Handler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Index Page"))
 }
+
+func m1(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("m1")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func m2(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("m2")
+		h.ServeHTTP(w, r)
+	})
+}
+
+func m3(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Println("m3")
+		h.ServeHTTP(w, r)
+	})
+}
+
+/*================================ CONFIG MIDDLEWARE ================================*/
