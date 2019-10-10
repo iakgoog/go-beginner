@@ -232,7 +232,7 @@ func TryStruct() {
 
 }
 
-func mutatePerson(p *person) { // take pointer as a parameter
+func mutatePerson(p *person) { // accept pointer as a parameter
 	p.Name = "Hacker"
 	fmt.Println("inside mutate:", p)
 }

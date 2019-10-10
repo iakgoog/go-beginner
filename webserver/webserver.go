@@ -11,6 +11,8 @@ func RunWebServer() {
 	runConfigMiddleware()
 }
 
+/*================================ SIMPLE WEB SERVER ================================*/
+
 func hardWay() {
 	// SIGNATURE: func ListenAndServe(addr string, handler Handler) error {}
 	/*
@@ -81,7 +83,6 @@ func loginPageHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 /*================================ EASY MUX ================================*/
-
 // easier way to create MUX
 func easyMux() {
 	mux := http.NewServeMux()
