@@ -7,11 +7,11 @@ shift + command + enter => create a blank line above cursor then move cursor up
 package main
 
 import (
-	// "github.com/iakgoog/go-beginner/basic"
-	"github.com/iakgoog/go-beginner/webserver"
+	"beginner/basic"
+	// "beginner/webserver"
 )
 
 func main() {
-	// basic.TryGoRoutine()
-	webserver.RunWebServer()
+	basic.TryGoRoutine()
+	// webserver.RunWebServer()
 }
