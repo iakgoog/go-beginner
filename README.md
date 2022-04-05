@@ -10,11 +10,11 @@ go run main.go
 
 **pk** = magic
 
-**pkgm**  
+**pkgm**
 
-**fp** = fmt.Println("")  
+**fp** = fmt.Println("")
 
-**lp** = log.Println("")  
+**lp** = log.Println("")
 
 log.Println("Hello, from log")  
 2019/09/17 08:30:34 Hello, from log
@@ -31,12 +31,12 @@ fmt.Printf("My name is **%s**.\n", name)
 var name = "Sutthinart Khunvadhana" (can be reduced to)  
 **name := "Sutthinart Khunvadhana"**
 
-how to declare var but will not use  
-**_ = name**
+how to declare var but will not be used  
+**\_ = name**
 
 **for** = for index := 0; index < count; index++
 
-**forr** = for _, var := range var
+**forr** = for \_, var := range var
 
 **tys** = type name struct {}
 
@@ -44,7 +44,7 @@ how to declare var but will not use
 
 **iferr** = if err != nil {}
 
-**hand** = func (w http.ResponseWriter, r *http.Request) {}
+**hand** = func (w http.ResponseWriter, r \*http.Request) {}
 
 r.URL.Path vs r.RequestURI  
 when request = <http://localhost:8080/about?name=hello>  
@@ -52,7 +52,7 @@ r.RequestURI = /about?name=hello
 r.URL.Path = /about  
 try **r.URL.Query()**
 
-## How to import go library  
+## How to import go library
 
 ```bash
 go get github.com/achoshift/middleware
